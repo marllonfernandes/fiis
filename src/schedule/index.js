@@ -249,34 +249,39 @@ function geraHtml(fiis) {
             <v-main>
                 <template>
                       <v-card>
-                      <v-card-title>
-                          Carteira FIIs
-                          <v-spacer></v-spacer>
-                          <!-- <v-text-field
-                            v-model="search"
-                            append-icon="mdi-magnify"
-                            label="Search"
-                            single-line
-                            hide-details
-                          ></v-text-field> -->
-                          <div>
-                              <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
-                                  <template v-slot:selection="{ item, index }">
-                                      <v-chip v-if="index < 2">
-                                          <span>{{ item.text }}</span>
-                                      </v-chip>
-                                      <span v-if="index === 2" class="grey--text caption">(+{{ selectedHeaders.length - 2 }} others)</span>
-                                  </template>
-                              </v-select>
-                          </div>
-                        </v-card-title>
                         <v-data-table 
                             fixed-header 
-                            height="500" 
+                            height="600" 
                             :headers="showHeaders" 
                             :items="filteredDesserts"
                             :items-per-page="5" 
-                            class="elevation-1">
+                            class="elevation-1"
+                            :search="search">
+                            
+                            <template v-slot:top>
+
+                                <v-toolbar flat>
+
+                                    <v-toolbar-title>Fundos Imobiliários</v-toolbar-title>
+
+                                    <v-divider class="mx-4" inset vertical></v-divider>
+
+                                    <v-text-field v-model="search" append-icon="mdi-magnify" label="Pesquisar" single-line hide-details></v-text-field>
+
+                                    <v-spacer></v-spacer>
+                                    
+                                    <v-select v-model="selectedHeaders" :items="headers" label="" multiple return-object class="mt-3">
+                                        <template v-slot:selection="{ item, index }">
+                                            <v-chip v-if="index < 2">
+                                                <span>{{ item.text }}</span>
+                                            </v-chip>
+                                            <span v-if="index === 2" class="grey--text caption">(+{{ selectedHeaders.length - 2 }} others)</span>
+                                        </template>
+                                    </v-select>
+
+                                </v-toolbar>
+
+                            </template>
                             <template v-slot:header.name="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
@@ -569,10 +574,24 @@ function geraHtml(fiis) {
         new Vue({
             el: "#app",
             vuetify: new Vuetify({
-                treeShake: true,
-                defaultAssets: {
-                    font: {
-                        family: 'Libre Baskerville'
+                theme: {
+                    defaultTheme: 'myCustomTheme',
+                    themes: {
+                        myCustomTheme: {
+                            dark: false,
+                            colors: {
+                                background: '#FFFFFF',
+                                surface: '#FFFFFF',
+                                primary: '#6200EE',
+                                'primary-darken-1': '#3700B3',
+                                secondary: '#03DAC6',
+                                'secondary-darken-1': '#018786',
+                                error: '#B00020',
+                                info: '#2196F3',
+                                success: '#4CAF50',
+                                warning: '#FB8C00',
+                            }
+                        }
                     }
                 }
             }),
