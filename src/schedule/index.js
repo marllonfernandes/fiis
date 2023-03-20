@@ -5,7 +5,6 @@ require("dotenv").config({
 
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const axios = require("axios");
 const { connectionDb } = require("../db");
 const { FII } = require("../schema");
 const urlBase = "https://www.fundsexplorer.com.br/funds";
