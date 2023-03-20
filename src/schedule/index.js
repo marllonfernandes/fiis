@@ -26,9 +26,7 @@ startJob()
 
 async function startJob() {
 
-  const dateStart = Intl.DateTimeFormat("pt-br", optionsDate).format(
-    new Date()
-  );
+  const dateStart = Intl.DateTimeFormat("pt-br", optionsDate).format(new Date());
   console.log(`Iniciado em: ${dateStart}`);
 
   // CONECTA NO BANCO
@@ -109,14 +107,25 @@ async function startJob() {
   }
 
   let bodyHtml = geraHtml(fiis);
-  let data = new Date();
-  let dia = data.getDate().toString().padStart(2, "0");
-  let mes = (data.getMonth() + 1).toString().padStart(2, "0");
-  let ano = data.getFullYear();
-  dataAtual = `${ano}${mes}${dia}-${data
-    .toLocaleTimeString()
+  let opt = {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  };
+
+  dataAtual = Intl.DateTimeFormat("pt-br", opt)
+    .format(new Date())
+    .replace("/", "")
+    .replace("/", "")
+    .replace(",", "")
+    .replace(" ", "-")
     .replace(":", "")
-    .replace(":", "")}`;
+    .replace(":", "");
+
   let file = `${process.cwd()}/src/reports/${dataAtual}.html`;
 
   await fs.writeFileSync(file, bodyHtml);
