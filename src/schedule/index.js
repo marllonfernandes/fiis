@@ -1,6 +1,6 @@
 require("dotenv").config({
-  allowEmptyValues: true,
-  path: process.env.NODE_ENV === "test" ? ".env.test" : ".env",
+    allowEmptyValues: true,
+    path: process.env.NODE_ENV === "test" ? ".env.test" : ".env",
 });
 
 const puppeteer = require("puppeteer");
@@ -9,49 +9,277 @@ const { connectionDb } = require("../db");
 const { FII } = require("../schema");
 const urlBase = "https://www.fundsexplorer.com.br/funds";
 const options = {
-  executablePath:
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  headless: true,
-  defaultViewport: null,
-  args: ["--window-size=1920,1080"],
+    executablePath: process.env.SYSTEM_OPERATION === 'macos' ? process.env.CHROME_PATH_MACOS : process.env.CHROME_PATH_WINDOWS,
+    headless: true,
+    defaultViewport: null,
+    args: ["--window-size=1920,1080"],
 };
 const optionsDate = {
-  dateStyle: "full",
-  timeStyle: "long",
-  timeZone: "America/Sao_Paulo",
+    dateStyle: "full",
+    timeStyle: "long",
+    timeZone: "America/Sao_Paulo",
 };
 
 startJob()
 
 async function startJob() {
+    
+    const dateStart = Intl.DateTimeFormat("pt-br", optionsDate).format(new Date());
+    console.log(`Iniciado em: ${dateStart}`);
+    
+    // CONECTA NO BANCO
+    await connectionDb();
+    
+    if (process.env.GERA_HTML_DB === 'true') {
+        await geraHtmlDb()
+        return
+    }
 
-  const dateStart = Intl.DateTimeFormat("pt-br", optionsDate).format(new Date());
-  console.log(`Iniciado em: ${dateStart}`);
+    const browser = await puppeteer.launch(options);
+    const page = await browser.newPage();
+    await page.setDefaultNavigationTimeout(0);
+    await page.goto(urlBase);
+    await sleep(100);
 
-  // CONECTA NO BANCO
-  await connectionDb();
+    const divs = await page.$$("#fiis-list-container > div", (divs) => divs);
+    let fiis = [];
 
-  const browser = await puppeteer.launch(options);
-  const page = await browser.newPage();
-  await page.setDefaultNavigationTimeout(0);
-  await page.goto(urlBase);
-  await sleep(100);
+    for (let i = 0; i < divs.length; i++) {
+        const div = divs[i];
 
-  const divs = await page.$$("#fiis-list-container > div", (divs) => divs);
-  let fiis = [];
+        const value = await page.evaluate((el) => el.textContent, div);
 
-  for (let i = 0; i < divs.length; i++) {
-    const div = divs[i];
+        let valueArr = value.split("\n");
+        valueArr = getNewArr(valueArr);
 
-    const value = await page.evaluate((el) => el.textContent, div);
+        console.log(valueArr[0]);
 
-    let valueArr = value.split("\n");
-    valueArr = getNewArr(valueArr);
+        try {
+            let {
+                price,
+                percentage,
+                liquidez,
+                ultimorendimento,
+                rendimentodividendo,
+                patrimonioliquido,
+                valorpatrimonial,
+                rentabilidademes,
+                pvp,
+            } = await info(browser, urlBase, valueArr[0]);
 
-    console.log(valueArr[0]);
+            const row = {
+                name: valueArr[0],
+                desc: valueArr[1],
+                admin: valueArr[3],
+                price: price ? price.trim().replace(" ", "") : "n/a",
+                percentage: percentage ? percentage.trim() : "n/a",
+                liquidez: liquidez ? liquidez.trim() : "n/a",
+                ultimorendimento: ultimorendimento
+                    ? ultimorendimento.trim().replace(" ", "")
+                    : "n/a",
+                rendimentodividendo: rendimentodividendo
+                    ? rendimentodividendo.trim()
+                    : "n/a",
+                patrimonioliquido: patrimonioliquido
+                    ? patrimonioliquido.trim().replace(" ", "")
+                    : "n/a",
+                valorpatrimonial: valorpatrimonial
+                    ? valorpatrimonial.trim().replace(" ", "")
+                    : "n/a",
+                rentabilidademes: rentabilidademes ? rentabilidademes.trim() : "n/a",
+                pvp: pvp.trim(),
+            };
 
-    try {
-      let {
+            fiis.push(row);
+
+            let query = { name: row.name },
+                update = { ...row },
+                options = { upsert: true };
+
+            // grava os dados no MongoDb
+            try {
+                await FII.findOneAndUpdate(query, update, options);
+            } catch (error) {
+                console.log(`updateFII/Db->${error.stack}`);
+            }
+        } catch (error) {
+            console.log(error.message);
+        }
+
+        await sleep(50);
+    }
+
+    let bodyHtml = geraHtml(fiis);
+    let opt = {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+    };
+
+    dataAtual = Intl.DateTimeFormat("pt-br", opt)
+        .format(new Date())
+        .replace("/", "")
+        .replace("/", "")
+        .replace(",", "")
+        .replace(" ", "-")
+        .replace(":", "")
+        .replace(":", "");
+
+
+    const dirReport = `${process.cwd()}/src/reports/`
+
+    if (!fs.existsSync(dirReport)) {
+        fs.mkdirSync(dirReport);
+    }
+    let file = `${dirReport}${dataAtual}.html`;
+
+    await fs.writeFileSync(file, bodyHtml);
+
+    const dateFinish = Intl.DateTimeFormat("pt-br", optionsDate).format(
+        new Date()
+    );
+    console.log(`Finalizado em: ${dateFinish}`);
+
+}
+
+async function geraHtmlDb() {
+  
+    const fiis = await FII.find({})
+
+    let bodyHtml = geraHtml(fiis);
+    let opt = {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+    };
+
+    dataAtual = Intl.DateTimeFormat("pt-br", opt)
+        .format(new Date())
+        .replace("/", "")
+        .replace("/", "")
+        .replace(",", "")
+        .replace(" ", "-")
+        .replace(":", "")
+        .replace(":", "");
+
+
+    const dirReport = `${process.cwd()}/src/reports/`
+
+    if (!fs.existsSync(dirReport)) {
+        fs.mkdirSync(dirReport);
+    }
+    let file = `${dirReport}${dataAtual}.html`;
+
+    await fs.writeFileSync(file, bodyHtml);
+
+    const dateFinish = Intl.DateTimeFormat("pt-br", optionsDate).format(
+        new Date()
+    );
+
+    console.log(`Finalizado em: ${dateFinish}`);
+
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getNewArr(arr) {
+    let newArr = [];
+    arr.forEach((el) => {
+        if (el.trim().length > 0) {
+            newArr.push(el.trim());
+        }
+    });
+    return newArr;
+}
+
+async function info(browser, urlBase, fii) {
+    const page = await browser.newPage();
+    await page.setDefaultNavigationTimeout(0);
+    await page.goto(`${urlBase}/${fii.toLowerCase()}`);
+    // await sleep(1000);
+
+    let priceSelector = await page.$("#stock-price > span.price");
+    let price = priceSelector
+        ? await page.evaluate((el) => el.textContent, priceSelector)
+        : null;
+
+    let percentageSelector = await page.$(
+        "#stock-price > span.percentage.positive"
+    );
+
+    if (!percentageSelector) {
+        percentageSelector = await page.$(
+            "#stock-price > span.percentage.negative"
+        );
+    }
+
+    let percentage = percentageSelector
+        ? await page.evaluate((el) => el.textContent, percentageSelector)
+        : null;
+
+    let liquidezSelector = await page.$(
+        "#main-indicators-carousel > div > div > div:nth-child(1) > span.indicator-value"
+    );
+    let liquidez = liquidezSelector
+        ? await page.evaluate((el) => el.textContent, liquidezSelector)
+        : null;
+
+    let ultimoRendimentoSelector = await page.$(
+        "#main-indicators-carousel > div > div > div:nth-child(2) > span.indicator-value"
+    );
+    let ultimorendimento = ultimoRendimentoSelector
+        ? await page.evaluate((el) => el.textContent, ultimoRendimentoSelector)
+        : null;
+
+    let rendimentoDividendoSelector = await page.$(
+        "#main-indicators-carousel > div > div > div:nth-child(3) > span.indicator-value"
+    );
+    let rendimentodividendo = rendimentoDividendoSelector
+        ? await page.evaluate((el) => el.textContent, rendimentoDividendoSelector)
+        : null;
+
+    let patrimonioLiquidoSelector = await page.$(
+        "#main-indicators-carousel > div > div > div:nth-child(4) > span.indicator-value"
+    );
+    let patrimonioliquido = patrimonioLiquidoSelector
+        ? await page.evaluate((el) => el.textContent, patrimonioLiquidoSelector)
+        : null;
+
+    let valorPatrimonialSelector = await page.$(
+        "#main-indicators-carousel > div > div > div:nth-child(5) > span.indicator-value"
+    );
+    let valorpatrimonial = valorPatrimonialSelector
+        ? await page.evaluate((el) => el.textContent, valorPatrimonialSelector)
+        : null;
+
+    let rentabilidadeMesSelector = await page.$(
+        "#main-indicators-carousel > div > div > div:nth-child(6) > span.indicator-value"
+    );
+    let rentabilidademes = rentabilidadeMesSelector
+        ? await page.evaluate((el) => el.textContent, rentabilidadeMesSelector)
+        : null;
+
+    let pvpSelector = await page.$(
+        "#main-indicators-carousel > div > div > div:nth-child(7) > span.indicator-value"
+    );
+
+    let pvp = pvpSelector
+        ? await page.evaluate((el) => el.textContent, pvpSelector)
+        : null;
+
+    page.close();
+
+    return {
         price,
         percentage,
         liquidez,
@@ -61,187 +289,11 @@ async function startJob() {
         valorpatrimonial,
         rentabilidademes,
         pvp,
-      } = await info(browser, urlBase, valueArr[0]);
-
-      const row = {
-        name: valueArr[0],
-        desc: valueArr[1],
-        admin: valueArr[3],
-        price: price ? price.trim().replace(" ", "") : "n/a",
-        percentage: percentage ? percentage.trim() : "n/a",
-        liquidez: liquidez ? liquidez.trim() : "n/a",
-        ultimorendimento: ultimorendimento
-          ? ultimorendimento.trim().replace(" ", "")
-          : "n/a",
-        rendimentodividendo: rendimentodividendo
-          ? rendimentodividendo.trim()
-          : "n/a",
-        patrimonioliquido: patrimonioliquido
-          ? patrimonioliquido.trim().replace(" ", "")
-          : "n/a",
-        valorpatrimonial: valorpatrimonial
-          ? valorpatrimonial.trim().replace(" ", "")
-          : "n/a",
-        rentabilidademes: rentabilidademes ? rentabilidademes.trim() : "n/a",
-        pvp: pvp.trim(),
-      };
-
-        fiis.push(row);
-
-      let query = { name: row.name },
-        update = { ...row },
-        options = { upsert: true };
-
-      // grava os dados no MongoDb
-      try {
-        await FII.findOneAndUpdate(query, update, options);
-      } catch (error) {
-        console.log(`updateFII/Db->${error.stack}`);
-      }
-    } catch (error) {
-      console.log(error.message);
-    }
-
-    await sleep(50);
-  }
-
-  let bodyHtml = geraHtml(fiis);
-  let opt = {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-  };
-
-  dataAtual = Intl.DateTimeFormat("pt-br", opt)
-    .format(new Date())
-    .replace("/", "")
-    .replace("/", "")
-    .replace(",", "")
-    .replace(" ", "-")
-    .replace(":", "")
-    .replace(":", "");
-
-  let file = `${process.cwd()}/src/reports/${dataAtual}.html`;
-
-  await fs.writeFileSync(file, bodyHtml);
-  
-  const dateFinish = Intl.DateTimeFormat("pt-br", optionsDate).format(
-    new Date()
-  );
-  console.log(`Finalizado em: ${dateFinish}`);
-
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function getNewArr(arr) {
-  let newArr = [];
-  arr.forEach((el) => {
-    if (el.trim().length > 0) {
-      newArr.push(el.trim());
-    }
-  });
-  return newArr;
-}
-
-async function info(browser, urlBase, fii) {
-  const page = await browser.newPage();
-  await page.setDefaultNavigationTimeout(0);
-  await page.goto(`${urlBase}/${fii.toLowerCase()}`);
-  // await sleep(1000);
-
-  let priceSelector = await page.$("#stock-price > span.price");
-  let price = priceSelector
-    ? await page.evaluate((el) => el.textContent, priceSelector)
-    : null;
-
-  let percentageSelector = await page.$(
-    "#stock-price > span.percentage.positive"
-  );
-
-  if (!percentageSelector) {
-    percentageSelector = await page.$(
-      "#stock-price > span.percentage.negative"
-    );
-  }
-
-  let percentage = percentageSelector
-    ? await page.evaluate((el) => el.textContent, percentageSelector)
-    : null;
-
-  let liquidezSelector = await page.$(
-    "#main-indicators-carousel > div > div > div:nth-child(1) > span.indicator-value"
-  );
-  let liquidez = liquidezSelector
-    ? await page.evaluate((el) => el.textContent, liquidezSelector)
-    : null;
-
-  let ultimoRendimentoSelector = await page.$(
-    "#main-indicators-carousel > div > div > div:nth-child(2) > span.indicator-value"
-  );
-  let ultimorendimento = ultimoRendimentoSelector
-    ? await page.evaluate((el) => el.textContent, ultimoRendimentoSelector)
-    : null;
-
-  let rendimentoDividendoSelector = await page.$(
-    "#main-indicators-carousel > div > div > div:nth-child(3) > span.indicator-value"
-  );
-  let rendimentodividendo = rendimentoDividendoSelector
-    ? await page.evaluate((el) => el.textContent, rendimentoDividendoSelector)
-    : null;
-
-  let patrimonioLiquidoSelector = await page.$(
-    "#main-indicators-carousel > div > div > div:nth-child(4) > span.indicator-value"
-  );
-  let patrimonioliquido = patrimonioLiquidoSelector
-    ? await page.evaluate((el) => el.textContent, patrimonioLiquidoSelector)
-    : null;
-
-  let valorPatrimonialSelector = await page.$(
-    "#main-indicators-carousel > div > div > div:nth-child(5) > span.indicator-value"
-  );
-  let valorpatrimonial = valorPatrimonialSelector
-    ? await page.evaluate((el) => el.textContent, valorPatrimonialSelector)
-    : null;
-
-  let rentabilidadeMesSelector = await page.$(
-    "#main-indicators-carousel > div > div > div:nth-child(6) > span.indicator-value"
-  );
-  let rentabilidademes = rentabilidadeMesSelector
-    ? await page.evaluate((el) => el.textContent, rentabilidadeMesSelector)
-    : null;
-
-  let pvpSelector = await page.$(
-    "#main-indicators-carousel > div > div > div:nth-child(7) > span.indicator-value"
-  );
-
-  let pvp = pvpSelector
-    ? await page.evaluate((el) => el.textContent, pvpSelector)
-    : null;
-
-  page.close();
-
-  return {
-    price,
-    percentage,
-    liquidez,
-    ultimorendimento,
-    rendimentodividendo,
-    patrimonioliquido,
-    valorpatrimonial,
-    rentabilidademes,
-    pvp,
-  };
+    };
 }
 
 function geraHtml(fiis) {
-  let body = `<!DOCTYPE html>
+    let body = `<!DOCTYPE html>
 <html>
 
 <head>
@@ -775,7 +827,7 @@ function geraHtml(fiis) {
 
 </html>`;
 
-  body = body.replace("###", `desserts: ${JSON.stringify(fiis)}`);
+    body = body.replace("###", `desserts: ${JSON.stringify(fiis)}`);
 
-  return body;
+    return body;
 }
