@@ -23,13 +23,13 @@ const optionsDate = {
 startJob()
 
 async function startJob() {
-    
+
     const dateStart = Intl.DateTimeFormat("pt-br", optionsDate).format(new Date());
     console.log(`Iniciado em: ${dateStart}`);
-    
+
     // CONECTA NO BANCO
     await connectionDb();
-    
+
     if (process.env.GERA_HTML_DB === 'true') {
         await geraHtmlDb()
         return
@@ -147,7 +147,7 @@ async function startJob() {
 }
 
 async function geraHtmlDb() {
-  
+
     const fiis = await FII.find({})
 
     let bodyHtml = geraHtml(fiis);
@@ -307,17 +307,13 @@ function geraHtml(fiis) {
     <div id="app">
         <v-app>
             <v-main>
+
+
                 <template>
-                      <v-card>
-                        <v-data-table 
-                            fixed-header 
-                            height="600" 
-                            :headers="showHeaders" 
-                            :items="filteredDesserts"
-                            :items-per-page="5" 
-                            class="elevation-1"
-                            :search="search">
-                            
+                    <v-card>
+                        <v-data-table fixed-header height="600" :headers="showHeaders" :items="filteredDesserts"
+                            :items-per-page="5" class="elevation-1" item-key="name" :search="search">
+
                             <template v-slot:top>
 
                                 <v-toolbar flat>
@@ -326,90 +322,108 @@ function geraHtml(fiis) {
 
                                     <v-divider class="mx-4" inset vertical></v-divider>
 
-                                    <v-text-field v-model="search" append-icon="mdi-magnify" label="Pesquisar" single-line hide-details></v-text-field>
+                                    <v-combobox v-model="selectedFiis" :items="selectedDesserts" multiple solo dense
+                                        chips class="mt-7 pa-2" label="Selecione">
+                                        <template v-slot:selection="data">
+                                            <v-chip :key="JSON.stringify(data.item)" v-bind="data.attrs"
+                                                :input-value="data.selected" :disabled="data.disabled"
+                                                @click:close="data.parent.selectItem(data.item)">
+                                                <v-avatar class="accent white--text" left
+                                                    v-text="data.item.slice(0, 1).toUpperCase()"></v-avatar>
+                                                {{ data.item }}
+                                            </v-chip>
+                                        </template>
+                                    </v-combobox>
 
                                     <v-spacer></v-spacer>
-                                    
-                                    <v-select v-model="selectedHeaders" :items="headers" label="" multiple return-object class="mt-3">
+
+                                    <v-select v-model="selectedHeaders" :items="headers" label="" multiple solo dense
+                                        return-object class="mt-7 pa-2">
                                         <template v-slot:selection="{ item, index }">
                                             <v-chip v-if="index < 2">
                                                 <span>{{ item.text }}</span>
                                             </v-chip>
-                                            <span v-if="index === 2" class="grey--text caption">(+{{ selectedHeaders.length - 2 }} others)</span>
+                                            <span v-if="index === 2" class="grey--text caption">(+{{
+                                                selectedHeaders.length - 2 }} others)</span>
                                         </template>
                                     </v-select>
 
                                 </v-toolbar>
 
                             </template>
+
                             <template v-slot:header.name="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="name ? 'primary' : ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="name" class="pa-4"  label="Enter the search term"
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4" label="Pesquisar por"
                                             :autofocus="true"></v-text-field>
-                                        <v-btn @click="name = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                        
+
                             <template v-slot:header.desc="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="desc ? 'primary' : ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="desc" class="pa-4"  label="Enter the search term"
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4" label="Pesquisar por"
                                             :autofocus="true"></v-text-field>
-                                        <v-btn @click="desc = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                        
+
                             <template v-slot:header.admin="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="admin ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="admin" class="pa-4"  label="Enter the search term"
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4" label="Pesquisar por"
                                             :autofocus="true"></v-text-field>
-                                        <v-btn @click="admin = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                            
+
                             <template v-slot:header.price="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="price ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="price" class="pa-4"  label="Enter the search term"
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4" label="Pesquisar por"
                                             :autofocus="true"></v-text-field>
-                                        <v-btn @click="price = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
@@ -419,15 +433,16 @@ function geraHtml(fiis) {
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="percentage ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="percentage" class="pa-4"  label="Enter the search term"
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4" label="Pesquisar por"
                                             :autofocus="true"></v-text-field>
-                                        <v-btn @click="percentage = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
@@ -437,123 +452,130 @@ function geraHtml(fiis) {
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="liquidez ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="liquidez" class="pa-4"  label="Enter the search term"
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4" label="Pesquisar por"
                                             :autofocus="true"></v-text-field>
-                                        <v-btn @click="liquidez = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                            
+
                             <template v-slot:header.ultimorendimento="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="ultimorendimento ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="ultimorendimento" class="pa-4"  label="Enter the search term"
-                                            :autofocus="true"></v-text-field>
-                                        <v-btn @click="ultimorendimento = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4"
+                                            label="Pesquisar por" :autofocus="true"></v-text-field>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                            
+
                             <template v-slot:header.rendimentodividendo="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="rendimentodividendo ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="rendimentodividendo" class="pa-4"  label="Enter the search term"
-                                            :autofocus="true"></v-text-field>
-                                        <v-btn @click="rendimentodividendo = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4"
+                                            label="Pesquisar por" :autofocus="true"></v-text-field>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                            
+
                             <template v-slot:header.patrimonioliquido="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="patrimonioliquido ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="patrimonioliquido" class="pa-4"  label="Enter the search term"
-                                            :autofocus="true"></v-text-field>
-                                        <v-btn @click="patrimonioliquido = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4"
+                                            label="Pesquisar por" :autofocus="true"></v-text-field>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                            
+
                             <template v-slot:header.valorpatrimonial="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="valorpatrimonial ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="valorpatrimonial" class="pa-4"  label="Enter the search term"
-                                            :autofocus="true"></v-text-field>
-                                        <v-btn @click="valorpatrimonial = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4"
+                                            label="Pesquisar por" :autofocus="true"></v-text-field>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                            
+
                             <template v-slot:header.rentabilidademes="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="rentabilidademes ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="rentabilidademes" class="pa-4"  label="Enter the search term"
-                                            :autofocus="true"></v-text-field>
-                                        <v-btn @click="rentabilidademes = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4"
+                                            label="Pesquisar por" :autofocus="true"></v-text-field>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
-                            
+
                             <template v-slot:header.pvp="{ header }">
                                 {{ header.text }}
                                 <v-menu offset-y :close-on-content-click="false">
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
-                                            <v-icon small :color="pvp ? 'primary': ''">
+                                            <v-icon small color="primary">
                                                 mdi-filter-variant
                                             </v-icon>
                                         </v-btn>
                                     </template>
                                     <div style="background-color: white; width: 280px">
-                                        <v-text-field v-model="pvp" class="pa-4"  label="Enter the search term"
+                                        <v-text-field v-model="multiSearch[header.value]" class="pa-4" label="Pesquisar por"
                                             :autofocus="true"></v-text-field>
-                                        <v-btn @click="pvp = ''" small text color="primary" class="ml-2 mb-2">Clean</v-btn>
+                                        <v-btn @click="multiSearch[header.value] = ''" small text color="primary"
+                                            class="ml-2 mb-2">Limpar</v-btn>
                                     </div>
                                 </v-menu>
                             </template>
@@ -561,35 +583,35 @@ function geraHtml(fiis) {
                             <template v-slot:item.name="{ item }">
                                 <div class="font-weight-light">{{ item.name }}</div>
                             </template>
-                            
+
                             <template v-slot:item.desc="{ item }">
                                 <div class="font-weight-light">{{ item.desc }}</div>
                             </template>
-                            
+
                             <template v-slot:item.admin="{ item }">
                                 <div class="font-weight-light">{{ item.admin }}</div>
                             </template>
-                            
+
                             <template v-slot:item.price="{ item }">
                                 <div class="font-weight-light">{{ item.price }}</div>
                             </template>
-                            
+
                             <template v-slot:item.liquidez="{ item }">
                                 <div class="font-weight-light">{{ item.liquidez }}</div>
                             </template>
-                            
+
                             <template v-slot:item.ultimorendimento="{ item }">
                                 <div class="font-weight-light">{{ item.ultimorendimento }}</div>
                             </template>
-                            
+
                             <template v-slot:item.patrimonioliquido="{ item }">
                                 <div class="font-weight-light">{{ item.patrimonioliquido }}</div>
                             </template>
-                            
+
                             <template v-slot:item.valorpatrimonial="{ item }">
                                 <div class="font-weight-light">{{ item.valorpatrimonial }}</div>
                             </template>
-                            
+
                             <template v-slot:item.pvp="{ item }">
                                 <div class="font-weight-light">{{ item.pvp }}</div>
                             </template>
@@ -602,7 +624,7 @@ function geraHtml(fiis) {
                                     <div class="font-weight-black">{{ item.percentage }}</div>
                                 </v-chip>
                             </template>
-                            
+
                             <template v-slot:item.rendimentodividendo="{ item }">
                                 <v-chip :color="getColor(item.rendimentodividendo)" dark label small>
                                     <v-avatar left>
@@ -611,7 +633,7 @@ function geraHtml(fiis) {
                                     <div class="font-weight-black">{{ item.rendimentodividendo }}</div>
                                 </v-chip>
                             </template>
-                            
+
                             <template v-slot:item.rentabilidademes="{ item }">
                                 <v-chip :color="getColor(item.rentabilidademes)" dark label small>
                                     <v-avatar left>
@@ -620,16 +642,19 @@ function geraHtml(fiis) {
                                     <div class="font-weight-black">{{ item.rentabilidademes }}</div>
                                 </v-chip>
                             </template>
-                            
+
                         </v-data-table>
-                      </v-card>
-                    </template>
+                    </v-card>
+                </template>            
+            
+
             </v-main>
         </v-app>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://unpkg.com/vuex@4.0.0/dist/vuex.global.js"></script>
     <script>
         new Vue({
             el: "#app",
@@ -670,8 +695,11 @@ function geraHtml(fiis) {
                     rentabilidademes: '',
                     pvp: '',
                     search: '',
+                    multiSearch: {},
                     headers: [],
                     selectedHeaders: [],
+                    selectedDesserts: [],
+                    selectedFiis: [],
                     headersMap: [
                         { text: "Nome", value: "name", align: "start", sortable: true, class: 'font-weight-light' },
                         { text: "Descrição", value: "desc", align: "start", sortable: true, class: 'font-weight-light' },
@@ -693,134 +721,91 @@ function geraHtml(fiis) {
             created() {
                 this.headers = Object.values(this.headersMap);
                 this.selectedHeaders = this.headers;
+
+                this.desserts.forEach(el => {
+                    this.selectedDesserts.push(el.name)
+                });
             },
             computed: {
-                    filteredDesserts() {
-
-                        conditions = [];
-
-                        if (this.name) {
-                            conditions.push(this.filterNome);
-                        }
-
-                        if (this.desc) {
-                            conditions.push(this.filterDesc);
-                        }
-
-                        if (this.admin) {
-                            conditions.push(this.filterAdmin);
-                        }
-                        
-                        if (this.price) {
-                            conditions.push(this.filterPrice);
-                        }
-                        
-                        if (this.percentage) {
-                            conditions.push(this.filterPercentage);
-                        }
-                        
-                        if (this.liquidez) {
-                            conditions.push(this.filterLiquidez);
-                        }
-                        
-                        if (this.ultimorendimento) {
-                            conditions.push(this.filterUltimoRendimento);
-                        }
-                        
-                        if (this.rendimentodividendo) {
-                            conditions.push(this.filterRendimentoDividendo);
-                        }
-                        
-                        if (this.patrimonioliquido) {
-                            conditions.push(this.filterPatrimonioLiquido);
-                        }
-                        
-                        if (this.valorpatrimonial) {
-                            conditions.push(this.filterValorPatrimonial);
-                        }
-                        
-                        if (this.rentabilidademes) {
-                            conditions.push(this.filterRentabilidadeMes);
-                        }
-                        
-                        if (this.pvp) {
-                            conditions.push(this.filterPvp);
-                        }
-                        
-                        if (conditions.length > 0) {
-                            return this.desserts.filter((dessert) => {
-                                return conditions.every((condition) => {
-                                    return condition(dessert);
-                                })
-                            })
-                        }
-
-                        return this.desserts;
-                    },
-                    showHeaders() {
-                        return this.headers.filter(s => this.selectedHeaders.includes(s));
+                
+                filteredDesserts() {
+                    if (this.multiSearch) {
+                        return this.desserts.filter((item) => {
+                            return Object.entries(this.multiSearch).every(([key, value]) => {
+                                if (value.includes("|") && !value.includes("!")) {
+                                    let el = value.split("|");
+                                    return el.some((elem) =>
+                                        (item[key] || "").toString().toUpperCase().startsWith(elem.toString().toUpperCase())
+                                    );
+                                }
+                                if (value.substring(0, 1) === "!" && !value.includes("|")) {
+                                    let el = value.split("!");
+                                    return el.some((elem) =>
+                                        !(item[key] || "").toString().toUpperCase().startsWith(elem.toString().toUpperCase())
+                                    );
+                                }
+                                if (value.includes("|") && value.substring(0, 1) === "!") {
+                                    let el = value.split("!")[1].split("|");
+                                    return !el.some((elem) =>
+                                        (item[key] || "").toString().toUpperCase().startsWith(elem.toString().toUpperCase())
+                                    );
+                                }
+                                if (value.substring(0, 1) === ">") {
+                                    let el = value.split(">");
+                                    if (item[key] !== " ") {
+                                    return Number(item[key] || "") > el[1];
+                                    }
+                                }
+                                if (value.substring(0, 1) === "<") {
+                                    let el = value.split("<");
+                                    if (item[key] !== " ") {
+                                    return Number(item[key] || "") < el[1];
+                                    }
+                                }
+                                if (value.substring(0, 1) === "=") {
+                                    let el = value.split("=");
+                                    return (item[key] || "").toString().toUpperCase() === el[1].toString().toUpperCase();
+                                }
+                                return (item[key] || "").toString().toUpperCase().includes(value.toString().toUpperCase());
+                            });
+                        });
+                    } else {
+                    return this.rowItems;
                     }
+                },            
+                
+                showHeaders() {
+                    return this.headers.filter(s => this.selectedHeaders.includes(s));
                 },
-                methods: {
-                    getColor(percentage) {
 
-                        if(percentage === 'N/A'){
-                            this.iconPercentual = 'mdi-block-helper'
-                            return 'cyan'
-                        }
-                        else if (percentage.includes('0,00')) {
-                            this.iconPercentual = 'mdi-trending-neutral'
-                            return 'secundary'
-                        }
-                        else if (percentage.includes('-')) {
-                            this.iconPercentual = 'mdi-trending-down'
-                            return 'red'
-                        }
-                        else{
-                            this.iconPercentual = 'mdi-trending-up'
-                            return 'green'
-                        }
-    
-                    },
-                    filterNome(item) {
-                        return item.name.includes(this.name);
-                    },
-                    filterDesc(item) {
-                        return item.desc.includes(this.desc);
-                    },
-                    filterAdmin(item) {
-                        return item.admin.includes(this.admin);
-                    },
-                    filterPrice(item) {
-                        return item.price.includes(this.price);
-                    },
-                    filterPercentage(item) {
-                        return item.percentage.includes(this.percentage);
-                    },
-                    filterLiquidez(item) {
-                        return item.liquidez.includes(this.liquidez);
-                    },
-                    
-                    filterUltimoRendimento(item) {
-                        return item.ultimorendimento.includes(this.ultimorendimento);
-                    },
-                    
-                    filterRendimentoDividendo(item) {
-                        return item.rendimentodividendo.includes(this.rendimentodividendo);
-                    },
-                    filterPatrimonioLiquido(item) {
-                        return item.patrimonioliquido.includes(this.patrimonioliquido);
-                    },
-                    filterValorPatrimonial(item) {
-                        return item.valorpatrimonial.includes(this.valorpatrimonial);
-                    },
-                    filterRentabilidadeMes(item) {
-                        return item.rentabilidademes.includes(this.rentabilidademes);
-                    },
-                    filterPvp(item) {
-                        return item.pvp.includes(this.pvp);
+            },
+            watch: {
+                selectedFiis(items) {
+                    // this.filteredDesserts = this.desserts.filter(s => items.includes(s.name))
+                },
+            },
+            methods: {
+                getColor(percentage) {
+
+                    if (percentage === 'N/A') {
+                        this.iconPercentual = 'mdi-block-helper'
+                        return 'cyan'
                     }
+                    else if (percentage.includes('0,00')) {
+                        this.iconPercentual = 'mdi-trending-neutral'
+                        return 'secundary'
+                    }
+                    else if (percentage.includes('-')) {
+                        this.iconPercentual = 'mdi-trending-down'
+                        return 'red'
+                    }
+                    else {
+                        this.iconPercentual = 'mdi-trending-up'
+                        return 'green'
+                    }
+
                 }
+            }
         })
     </script>
 </body>
