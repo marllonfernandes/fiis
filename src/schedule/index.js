@@ -307,8 +307,6 @@ function geraHtml(fiis) {
     <div id="app">
         <v-app>
             <v-main>
-
-
                 <template>
                     <v-card>
                         <v-data-table fixed-header height="600" :headers="showHeaders" :items="itemRows"
@@ -326,7 +324,7 @@ function geraHtml(fiis) {
                                         chips class="mt-7 pa-2" label="Selecione">
                                         <template v-slot:selection="data">
                                             <v-chip :key="JSON.stringify(data.item)" v-bind="data.attrs"
-                                                :input-value="data.selected" :disabled="data.disabled"
+                                                :input-value="data.selected" :disabled="data.disabled" close
                                                 @click:close="data.parent.selectItem(data.item)">
                                                 <v-avatar class="accent white--text" left
                                                     v-text="data.item.slice(0, 1).toUpperCase()"></v-avatar>
@@ -352,9 +350,11 @@ function geraHtml(fiis) {
 
                             </template>
 
-                            <template v-slot:header.name="{ header }">
+                            <template v-slot:header.name="{ header }"> 
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -364,24 +364,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="name" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'name')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -389,7 +389,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.desc="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -399,24 +401,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="desc" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'desc')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -424,7 +426,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.admin="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -434,24 +438,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="admin" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'admin')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -459,7 +463,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.price="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -469,24 +475,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="price" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'price')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -494,7 +500,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.percentage="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -504,24 +512,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="percentage" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'percentage')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -529,7 +537,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.liquidez="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -539,24 +549,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="liquidez" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'liquidez')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -564,7 +574,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.ultimorendimento="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -574,24 +586,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="ultimorendimento" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'ultimorendimento')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -599,7 +611,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.rendimentodividendo="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -609,24 +623,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="rendimentodividendo" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'rendimentodividendo')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -634,7 +648,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.patrimonioliquido="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -644,24 +660,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="patrimonioliquido" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'patrimonioliquido')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -669,7 +685,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.valorpatrimonial="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -679,24 +697,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="valorpatrimonial" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'valorpatrimonial')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -704,7 +722,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.rentabilidademes="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -714,24 +734,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="rentabilidademes" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'rentabilidademes')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -739,7 +759,9 @@ function geraHtml(fiis) {
 
                             <template v-slot:header.pvp="{ header }">
                                 {{ header.text }}
-                                <v-menu offset-y :close-on-content-click="false">
+                                <v-menu 
+                                    :nudge-width="200"
+                                    offset-x>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon v-bind="attrs" v-on="on">
                                             <v-icon small color="primary">
@@ -749,24 +771,24 @@ function geraHtml(fiis) {
                                     </template>
                                     <div style="background-color: white; width: 280px">
                                         <v-text-field 
-                                            v-model="multiSearch" 
+                                            v-model="pvp" 
                                             class="pa-4" 
                                             label="Pesquisar por"
                                             :autofocus="true">
                                         </v-text-field>
                                         <v-btn 
-                                            @click="filterByColumn(true, 'pvp')" 
-                                            small 
-                                            text 
-                                            color="primary"
-                                            class="ml-2 mb-2">Ok
-                                        </v-btn>
-                                        <v-btn 
-                                            @click="filterByColumn(false)" 
+                                            @click="filterByColumn(false, header.value)" 
                                             small 
                                             text 
                                             color="primary"
                                             class="ml-2 mb-2">Cancelar
+                                        </v-btn>
+                                        <v-btn 
+                                            @click="filterByColumn(true, header.value)" 
+                                            small 
+                                            text 
+                                            color="primary"
+                                            class="ml-2 mb-2">Ok
                                         </v-btn>
                                     </div>
                                 </v-menu>
@@ -838,9 +860,7 @@ function geraHtml(fiis) {
                         </v-data-table>
                     </v-card>
                 </template>            
-            
-
-            </v-main>
+            </v-main>            
         </v-app>
     </div>
 
@@ -892,19 +912,104 @@ function geraHtml(fiis) {
                     selectedHeaders: [],
                     selectedFiis: [],
                     itemRows:[],
+                    condition: [],
                     headersMap: [
-                        { text: "Nome", value: "name", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Descrição", value: "desc", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Admin", value: "admin", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Preço", value: "price", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Percentual", value: "percentage", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Liquidez", value: "liquidez", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Ultimo.Rend", value: "ultimorendimento", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Rend.Dividendo", value: "rendimentodividendo", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Patr.Liquido", value: "patrimonioliquido", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Vlr.Patrimonial", value: "valorpatrimonial", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "Rent.Mensal", value: "rentabilidademes", align: "start", sortable: true, class: 'font-weight-light' },
-                        { text: "P/VP", value: "pvp", align: "start", sortable: true, class: 'font-weight-light' },
+                        { 
+                            text: "Nome", 
+                            value: "name", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.name.toLowerCase() ) }  
+                        },
+                        { 
+                            text: "Descrição", 
+                            value: "desc", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.desc.toLowerCase() ) }  
+                        },
+                        { 
+                            text: "Admin", 
+                            value: "admin", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.admin.toLowerCase() ) }
+                        },
+                        { 
+                            text: "Preço", 
+                            value: "price", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.price.toLowerCase() ) } 
+                        },
+                        { 
+                            text: "Percentual", 
+                            value: "percentage", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.percentage.toLowerCase() ) }
+                        },
+                        { 
+                            text: "Liquidez", 
+                            value: "liquidez", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.liquidez.toLowerCase() ) } 
+                        },
+                        { 
+                            text: "Ultimo.Rend"
+                            , value: "ultimorendimento", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.ultimorendimento.toLowerCase() ) }  
+                        },
+                        { 
+                            text: "Rend.Dividendo", 
+                            value: "rendimentodividendo", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.rendimentodividendo.toLowerCase() ) }   
+                        },
+                        { 
+                            text: "Patr.Liquido"
+                            , value: "patrimonioliquido", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light', 
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.patrimonioliquido.toLowerCase() ) }
+                        },
+                        { 
+                            text: "Vlr.Patrimonial", 
+                            value: "valorpatrimonial", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.valorpatrimonial.toLowerCase() ) }
+                        },
+                        { 
+                            text: "Rent.Mensal",
+                            value: "rentabilidademes", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.rentabilidademes.toLowerCase() ) } 
+                        },
+                        { 
+                            text: "P/VP",
+                            value: "pvp", 
+                            align: "start", 
+                            sortable: false, 
+                            class: 'font-weight-light',
+                            filter: f => { return ( f + '' ).toLowerCase().includes( this.pvp.toLowerCase() ) }  
+                        },
 
                     ],
                     ###
@@ -959,16 +1064,15 @@ function geraHtml(fiis) {
 
                 },
                 filterByColumn(type, col){
-                    if (type) {
-                        this.itemRows = this.desserts.filter(el => el[col].includes(this.multiSearch))
-                    } else {
-                        this.multiSearch = ''
+                    if (!type) {
+                        this[col] = ''
                         this.itemRows = this.desserts
                     }
                 }
+                
             }
         })
-    </script>
+    </script>    
 </body>
 
 </html>`;
